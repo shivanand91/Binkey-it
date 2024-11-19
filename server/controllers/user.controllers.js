@@ -2,8 +2,7 @@ import { response } from 'express';
 import UserModel from '../models/user.model.js';
 import bcryptjs from 'bcryptjs'
 import sendEmail from '../config/sendEmail.js';
-import dotenv from "dotenv"
-dotenv.config()
+import verifyEmailTemplate from '../utils/veryEmailTemplate.js'
 
 export async function registerUserController(req, res) {
     try {

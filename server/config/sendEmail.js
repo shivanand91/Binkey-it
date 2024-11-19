@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 import dotenv from 'dotenv'
 dotenv.config()
-if (process.env.RESEND_API) {
+if (!process.env.RESEND_API) {
     console.log("Provide RESEND_APT in the side of .env file");
     
 }
