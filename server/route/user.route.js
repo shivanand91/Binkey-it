@@ -1,10 +1,48 @@
-import { Router } from 'express'
-import { loginController, registerUserController, verifyEmailController } from '../controllers/user.controllers.js'
+// import { Router } from 'express'
+// import { loginController, logoutController, registerUserController, uploadAvatar, verifyEmailController } from '../controllers/user.controllers.js'
+// import auth from "../middleware/auth.js"
 
-const userRouter = Router()
+// const userRouter = Router()
 
-userRouter.post('/register', registerUserController)
-userRouter.post('/verify-email', verifyEmailController)
-userRouter.post('/login', loginController)
+// userRouter.post('/register', registerUserController)
+// userRouter.post('/verify-email', verifyEmailController)
+// userRouter.post('/login', loginController)
+// userRouter.get('/logout', logoutController)
+// userRouter.put("/upload", auth, upload.single("avatar"), uploadAvatar)
+// export default userRouter
 
-export default userRouter
+import { Router } from 'express';
+import multer from 'multer'; // Import multer
+import { 
+    loginController, 
+    logoutController, 
+    registerUserController,  
+    uploadAvatar, 
+    verifyEmailController 
+} from '../controllers/user.controllers.js';
+import auth from "../middleware/auth.js";
+
+// Set up multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // Directory for uploaded files
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`); // Unique filename
+    },
+});
+
+// Initialize multer with the storage configuration
+const upload = multer({ storage });
+
+const userRouter = Router();
+
+userRouter.post('/register', registerUserController);
+userRouter.post('/verify-email', verifyEmailController);
+userRouter.post('/login', loginController);
+userRouter.get('/logout', logoutController);
+
+// Add multer middleware to handle avatar uploads
+userRouter.put('/upload', auth, upload.single('avatar'), uploadAvatar);
+
+export default userRouter;

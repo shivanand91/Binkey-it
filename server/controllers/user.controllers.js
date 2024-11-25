@@ -41,7 +41,8 @@ export async function registerUserController(req, res) {
         const newUser = new UserModel(payload)
         const save = await newUser.save()
 
-        const verifyEmailUrl = `${process.env.FRONTEND_URL}/verify-email?code=${save?._id}`
+        const verifyEmailUrl = `${process.env.FRONTEND_URL}/verify-email?code=${save?._id}`;
+
 
         const verifyEmail = await sendEmail({
             sendTo: email,
@@ -68,7 +69,7 @@ export async function registerUserController(req, res) {
     }
 }
 
-export async function verifyEmailController(req, res) { 
+export async function verifyEmailController(req, res) {
     try {
         const { code } = req.body
         
@@ -95,13 +96,12 @@ export async function verifyEmailController(req, res) {
         return res.status(500).json({
             message: error.message || error,
             error: true,
-            success : true
+            success : false
         })
     }
 }
 
 // login controller
-
 export async function loginController(req, res) {
     try {
         const { email, password } = req.body;
@@ -171,3 +171,59 @@ export async function loginController(req, res) {
         });
     }
 }
+
+// logout controller
+
+export async function logoutController(req, res) {
+    try {
+
+        const userId = req.userId
+
+        const cookieOption = {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+        }
+
+        res.clearCookie("accessToken", cookieOption)
+        res.clearCookie("refreshToken", cookieOption)
+
+        const removeRefreshtoken = await UserModel.findByIdAndUpdate(userId, {
+            refresh_token: " "
+        })
+
+        return res.json({
+            message: "Logout Successfully",
+            error: false,
+            success : true
+        })
+
+    } catch(error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+// upload avatar
+
+export async function uploadAvatar(req, res) {
+    try {
+        
+        const image = req.file
+        console.log(image);
+        
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+
