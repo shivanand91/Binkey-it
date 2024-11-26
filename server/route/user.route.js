@@ -21,19 +21,7 @@ import {
     verifyEmailController 
 } from '../controllers/user.controllers.js';
 import auth from "../middleware/auth.js";
-
-// Set up multer storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Directory for uploaded files
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Unique filename
-    },
-});
-
-// Initialize multer with the storage configuration
-const upload = multer({ storage });
+import upload from '../middleware/multer.js';
 
 const userRouter = Router();
 

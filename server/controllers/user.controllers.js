@@ -5,6 +5,7 @@ import sendEmail from '../config/sendEmail.js';
 import verifyEmailTemplate from '../utils/veryEmailTemplate.js'
 import generateAcccessToke from '../utils/generatedAccessToken.js';
 import generatedRefreshToken from '../utils/generatedRefreshToken.js';
+import uploadImageCloudinary from '../utils/uploadImageCloudinary.js';
 
 export async function registerUserController(req, res) {
     try {
@@ -212,8 +213,21 @@ export async function logoutController(req, res) {
 export async function uploadAvatar(req, res) {
     try {
         
+        const userId = req.userId
         const image = req.file
-        console.log(image);
+        const upload = await uploadImageCloudinary(image)
+        
+        const upadateUser = await UserModel.findByIdAndUpdate(userId, {
+            avater: upload.url
+        })
+
+        return res.json({
+            message: "upload profile",
+            data: {
+                _id: userId,
+                avatar: upload.url
+            }
+        })
         
 
     } catch (error) {
