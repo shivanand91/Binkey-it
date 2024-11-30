@@ -1,5 +1,5 @@
 const generateOtp = () => {
-    return Math.floor(math.random()*900000)
+    return Math.floor(Math.random()*900000)
 }
 
 export default generateOtp

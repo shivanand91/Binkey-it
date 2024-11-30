@@ -8,6 +8,7 @@ import generatedRefreshToken from '../utils/generatedRefreshToken.js';
 import uploadImageCloudinary from '../utils/uploadImageCloudinary.js';
 import forgotPassword from '../utils/forgotPasswordTemplate.js';
 import generateOtp from '../utils/generateOtp.js';
+import jwt from 'jsonwebtoken';
 
 export async function registerUserController(req, res) {
     try {
@@ -71,6 +72,7 @@ export async function registerUserController(req, res) {
         })
     }
 }
+
 
 export async function verifyEmailController(req, res) {
     try {
@@ -175,8 +177,8 @@ export async function loginController(req, res) {
     }
 }
 
-// logout controller
 
+// logout controller
 export async function logoutController(req, res) {
     try {
 
@@ -240,8 +242,8 @@ export async function uploadAvatar(req, res) {
     }
 }
 
-//update user details
 
+//update user details
 export async function updateUserDetails(req, res){
     try {
         const userId = req.userId
@@ -277,8 +279,8 @@ export async function updateUserDetails(req, res){
     }
 }
 
-// forgot password
 
+// forgot password
 export async function forgotPasswordController(req, res) { 
     try {
         
@@ -317,6 +319,177 @@ export async function forgotPasswordController(req, res) {
             success: true,
             data: {
                 otp: otp,
+            }
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+// verify forgot password otp
+export async function verifyForgotPasswordOtp(req, res) {
+    try {
+        
+        const { email, otp } = req.body
+        
+        if (!email || !otp) {
+            return res.status(400).json({
+                message: "email and otp are required",
+                error: true,
+                success: false
+            })
+        }
+
+        const user = await UserModel.findOne({ email })
+        
+        if (!user) {
+            return res.status(500).json({
+                message: "Email not available",
+                error: true,
+                success: false
+            })
+        }
+
+        const currentTime = new Date().toISOString()
+
+        if (user.forgot_password_expire < currentTime) {
+            return res.status(400).json({
+                message: "otp expired",
+                error: true,
+                success: false
+            })
+        }
+
+        if (otp !== user.forgot_password_otp) {
+            return res.status(400).json({
+                message: "otp is incorrect",
+                error: true,
+                success: false
+            })
+        }
+
+        // if otp is not expired
+        // otp === user.forgot_password_otp
+
+        return res.json({
+            message: "otp is correct",
+            error: false,
+            success: true
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+
+// reset password
+export async function resetPasswordController(req, res) {
+    try {
+
+        const { email, newPassword, confirmPassword } = req.body
+
+        if (!email || !newPassword || !confirmPassword) {
+            return res.status(400).json({
+                message: "all fields are required",
+                error: true,
+                success: false
+            })
+        }
+        
+        const user = await UserModel.findOne({ email })
+        
+        if (!user) {
+            return res.status(500).json({
+                message: "user not found",
+                error: true,
+                success: false
+            })
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "password and confirm password must be different",
+                error: true,
+                success: false
+            })
+        }
+      
+        const salt = await bcryptjs.genSalt(10)
+        const hashPassword = await bcryptjs.hash(newPassword, salt)
+
+        const update = await UserModel.findOneAndUpdate(user._id, {
+            password: hashPassword
+        })
+
+        return res.json({
+            message: "password update successfully",
+            error: false,
+            success: true
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+//refresh token
+export async function refreshTokenController(req, res) {
+    try {
+
+        const rereshToken = req.cookie.refreshToken || req.header?.authorization?.split(" ")[1]
+        
+        if (!refreshToken) {
+            return res.status(401).json({
+                message: "Invalid token",
+                error: true,
+                success: false
+            })
+        }
+
+        const verifyToken = await jwt.verify(refreshToken, process.env.SECRET_KEY_REFRESH_TOKEN)
+        
+        if (!verifyToken) {
+            return res.status(401).json({
+                message: "Invalid token",
+                error: true,
+                success: false
+            })
+        }
+
+        const userId = verifyToken?.id
+        const newAccessToken = await generateAcccessToke(userId)
+        
+        const cookieOption = {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None"
+        }
+
+        res.cookie('accessToken', newAccessToken, cookieOption)
+    
+        return res.json({
+            message: "Token refresh successfully",
+            error: false,
+            success: true,
+            data: {
+                accessToken: newAccessToken
             }
         })
 
