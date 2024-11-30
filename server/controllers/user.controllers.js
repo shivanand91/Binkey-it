@@ -6,6 +6,8 @@ import verifyEmailTemplate from '../utils/veryEmailTemplate.js'
 import generateAcccessToke from '../utils/generatedAccessToken.js';
 import generatedRefreshToken from '../utils/generatedRefreshToken.js';
 import uploadImageCloudinary from '../utils/uploadImageCloudinary.js';
+import forgotPassword from '../utils/forgotPasswordTemplate.js';
+import generateOtp from '../utils/generateOtp.js';
 
 export async function registerUserController(req, res) {
     try {
@@ -209,7 +211,6 @@ export async function logoutController(req, res) {
 }
 
 // upload avatar
-
 export async function uploadAvatar(req, res) {
     try {
         
@@ -239,5 +240,91 @@ export async function uploadAvatar(req, res) {
     }
 }
 
+//update user details
 
+export async function updateUserDetails(req, res){
+    try {
+        const userId = req.userId
+        const { name, email, password, mobile } = req.body
+        
+        let hashPassword = ""
 
+        if (password) {
+            const salt = await bcryptjs.genSalt(10)
+            hashPassword = await bcryptjs.hash(password, salt)
+        }
+
+        const upadateUser = await UserModel.findByIdAndUpdate(userId, {
+            ...(name && {name: name}),
+            ...(email && {email: email}),
+            ...(mobile && {mobile: mobile}),
+            ...(password && {password: hashPassword}),
+        })
+        
+        return res.json({
+            message: "update user details",
+            error: false,
+            success: false,
+            data: upadateUser
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+// forgot password
+
+export async function forgotPasswordController(req, res) { 
+    try {
+        
+        const { email } = req.body
+        
+        const user = await UserModel.findOne({ email: email })
+
+        if (!user) {
+            return res.status(400).json({
+                message: "user not found",
+                error: true,
+                success : false
+            })
+        }
+
+        const otp = generateOtp()
+        const expireTime = new Date() + 60 * 60 * 1000 // 1 hour
+
+        const update = await UserModel.findByIdAndUpdate(user._id, {
+            forgot_password_otp: otp,
+            forgot_password_expire: new Date(expireTime).toISOString()
+        })
+
+        await sendEmail({
+            sendTo: email,
+            subject: "Forgot Password from binkeit",
+            html: forgotPassword({
+                name: user.name,
+                otp : otp
+            })
+        })
+
+        return res.json({
+            message: "otp sent to your email",
+            error: false,
+            success: true,
+            data: {
+                otp: otp,
+            }
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}

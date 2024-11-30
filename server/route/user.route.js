@@ -14,9 +14,12 @@
 import { Router } from 'express';
 import multer from 'multer'; // Import multer
 import { 
+    
+    forgotPasswordController,
     loginController, 
     logoutController, 
     registerUserController,  
+    updateUserDetails,  
     uploadAvatar, 
     verifyEmailController 
 } from '../controllers/user.controllers.js';
@@ -29,6 +32,8 @@ userRouter.post('/register', registerUserController);
 userRouter.post('/verify-email', verifyEmailController);
 userRouter.post('/login', loginController);
 userRouter.get('/logout', logoutController);
+userRouter.put('/update-details',auth, updateUserDetails);
+userRouter.put('/forgotPassword',auth, forgotPasswordController);
 
 // Add multer middleware to handle avatar uploads
 userRouter.put('/upload', auth, upload.single('avatar'), uploadAvatar);
